@@ -12,7 +12,7 @@ public class BoardPosition : MonoBehaviour {
     public bool Used;
 
     public int Type = 2;
-
+    public int rank =0;
     
 	// Use this for initialization
 	void Start () {

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 
 public class Board : MonoBehaviour {
@@ -19,11 +20,13 @@ public class Board : MonoBehaviour {
     /// Prefab del Círculo
     /// </summary>
     public GameObject Circle;
+    public  Text text;
+    public static bool winner = false;
 
 	public BoardPosition[] Positions;
-   // public int iVer;
+    // public int iVer;
     //public int iHor;
-
+    public BoardPosition[] emptyTiles;
     void OnGUI () {
         string NextPlayer = _playerGame == 0 ? "TACHE" : "CÍRCULO";
         GUILayout.Label("Es el turno del jugador: " + NextPlayer);
@@ -38,8 +41,11 @@ public class Board : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        winner(Positions);
-	}
+        Winner(Positions);
+        GetEmptyTiles(Positions);
+        Minimax(_playerGame, emptyTiles, Positions);
+
+    }
 
     /// <summary>
     /// Coloca la pieza de juego en la posición dada
@@ -62,7 +68,7 @@ public class Board : MonoBehaviour {
             bp.Used = true;
 
 			bp.Type = _playerGame;
-			Debug.Log("Hola mundo");
+			
 			            
             // Cambiamos la ficha para el siguiente juego
             _playerGame = _playerGame == 0 ? 1 : 0;    
@@ -70,9 +76,9 @@ public class Board : MonoBehaviour {
 
     }
 
-    public void winner(BoardPosition[] position)
+    public static bool Winner(BoardPosition[] positions)
     {
-
+        BoardPosition[] position = positions;
         //Horizontales Circulo
         for (int i = 0; i < 3; i++)
         {
@@ -82,40 +88,45 @@ public class Board : MonoBehaviour {
             position[iHor + 1].Type == 1 &&
             position[iHor + 2].Type == 1)
             {
+                //text.text = "Ganó Círculo";
                 Debug.Log("Gano Circulo");
             }
         }
         //Horizontales Tache
         for (int i = 0; i < 3; i++)
         {
-            int iVer = i;
+
             int iHor = i * 3;
             if (position[iHor].Type == 0 &&
             position[iHor + 1].Type == 0 &&
             position[iHor + 2].Type == 0)
             {
+                //text.text = "Ganó Tache";
                 Debug.Log("Gano Tache");
             }
         }
 
         //VERTICAL CIRCULO
-        
+
         if (position[0].Type == 1 &&
             position[5].Type == 1 &&
             position[6].Type == 1)
         {
+            //text.text = "Ganó Círculo";
             Debug.Log("Gano Circulo");
         }
         if (position[1].Type == 1 &&
         position[4].Type == 1 &&
         position[7].Type == 1)
         {
+            //text.text = "Ganó Círculo";
             Debug.Log("Gano Circulo");
         }
         if (position[2].Type == 1 &&
         position[3].Type == 1 &&
         position[8].Type == 1)
         {
+            //text.text = "Ganó Círculo";
             Debug.Log("Gano Circulo");
         }
 
@@ -125,32 +136,37 @@ public class Board : MonoBehaviour {
             position[5].Type == 0 &&
             position[6].Type == 0)
         {
+            //text.text = "Ganó Tache";
             Debug.Log("Gano Tache");
         }
         if (position[1].Type == 0 &&
         position[4].Type == 0 &&
         position[7].Type == 0)
         {
+            //text.text = "Ganó Tache";
             Debug.Log("Gano Tache");
         }
         if (position[2].Type == 0 &&
-        position[4].Type == 0 &&
+        position[3].Type == 0 &&
         position[8].Type == 0)
         {
+            //text.text = "Ganó Tache";
             Debug.Log("Gano Tache");
         }
-    
+
         //DIAGONAL TACHE
         if (position[0].Type == 0 &&
              position[4].Type == 0 &&
              position[8].Type == 0)
         {
+            //text.text = "Ganó Tache";
             Debug.Log("Gano Tache");
         }
         if (position[6].Type == 0 &&
              position[4].Type == 0 &&
              position[2].Type == 0)
         {
+            //text.text = "Ganó Tache";
             Debug.Log("Gano Tache");
         }
 
@@ -159,16 +175,89 @@ public class Board : MonoBehaviour {
              position[4].Type == 1 &&
              position[8].Type == 1)
         {
+            //text.text = "Ganó Círculo";
             Debug.Log("Gano Circulo");
         }
-        if (position[6].Type == 1&&
+        if (position[6].Type == 1 &&
              position[4].Type == 1 &&
              position[2].Type == 1)
         {
+            //text.text = "Ganó Círculo";
             Debug.Log("Gano Circulo");
         }
+        return winner = true;
     }
 
+    public static BoardPosition[] GetEmptyTiles(BoardPosition[] boardState)
+    {
+        BoardPosition[] emptyTiles = new BoardPosition[9];
+        for (int i = 0; i <= 8; i++)
+        {
+            if (boardState[i].Used == false)
+            {
+                emptyTiles[i] = new BoardPosition();
+            }
+        }
+        return emptyTiles;
+    }
 
+    public static bool IsDraw(BoardPosition[] boardState)
+    {
+        if (Winner(boardState))
+            return false;
+        for (int i = 0; i < 9; i++)
+        {
+            if (boardState[i] == null)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    BoardPosition Minimax(int player, BoardPosition[] emptyTiles, BoardPosition[] positions)
+    {
+        BoardPosition best_move = null;
+
+
+        for (int i = 0; i < emptyTiles.Length; i++)
+        {
+            BoardPosition curMove = new BoardPosition(); //creo un nuevo movimiento 
+            curMove = emptyTiles[i]; //
+            BoardPosition[] newState = (BoardPosition[])positions.Clone();
+            newState[i].Type = curMove.Type == 0 ? 1 : 0;
+
+            if (Winner(positions))
+            {
+                if (!(IsDraw(newState)))
+                {
+                    curMove.rank = 0;
+                }
+                else if (Winner(newState))
+                {
+                    curMove.rank = 1;
+                }
+                else
+                {
+                    curMove.rank = -1;
+                }
+            }
+
+            else
+            {
+                BoardPosition[] newEmptyTiles = emptyTiles;
+                newEmptyTiles[i] = null;
+                curMove.rank = -Minimax(player == 0 ? 1 : 0, newEmptyTiles, (BoardPosition[])newState.Clone()).rank;
+            }
+
+            if (best_move == null || curMove.rank > best_move.rank)
+            {
+                best_move = curMove;
+            }
+
+
+        }
+        return best_move;
+    }
     
+
 }
